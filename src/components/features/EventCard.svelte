@@ -4,7 +4,7 @@
   import Button from '../ui/Button.svelte';
   import Card from '../ui/Card.svelte';
   import { formatDateTime, getTimeFromNow } from '../../lib/utils/date';
-  import { Calendar, Clock, ExternalLink, ChevronDown, ChevronUp, Bell, BellOff, ArrowRight, Plus, ChevronRight } from 'lucide-svelte';
+  import { Calendar, Clock, ExternalLink, ChevronDown, ChevronUp, Bell, BellOff, ArrowRight, Plus, ChevronRight, Globe } from 'lucide-svelte';
   import { onMount } from 'svelte';
   import { format } from 'date-fns';
   import { ko } from 'date-fns/locale';
@@ -81,10 +81,11 @@
   }
   
   function getStatusTag(): { text: string; class: string } {
-    if (isMyReservation || reservations.length > 0) return { text: 'Booked', class: 'status-booked' };
-    if (isPast) return { text: 'Past', class: 'status-past' };
-    if (isActive) return { text: 'Active', class: 'status-active' };
-    return { text: 'Open', class: 'status-open' };
+    // hasNotification이 true이거나 reservations가 있거나 isMyReservation이 true이면 '예약됨' 상태로 표시
+    if (hasNotification || isMyReservation || reservations.length > 0) return { text: '예약됨', class: 'status-booked' };
+    if (isPast) return { text: '종료됨', class: 'status-past' };
+    if (isActive) return { text: '진행중', class: 'status-active' };
+    return { text: '예약가능', class: 'status-open' };
   }
   
   // 예약 시작 시간 포맷팅 (M/d HH:mm 형식)
@@ -137,16 +138,15 @@
   function getPlatformIcon(platform: string): string {
     const lowerPlatform = platform.toLowerCase();
     
-    if (lowerPlatform.includes('카카오')) return '🟡';
-    if (lowerPlatform.includes('네이버')) return '🟢';
-    if (lowerPlatform.includes('구글')) return '🔴';
-    if (lowerPlatform.includes('인터파크')) return '🎫';
-    if (lowerPlatform.includes('예스24')) return '📚';
-    if (lowerPlatform.includes('멜론')) return '🎵';
-    if (lowerPlatform.includes('티켓링크')) return '🔗';
-    if (lowerPlatform.includes('쿠팡')) return '📦';
+    if (lowerPlatform.includes('카카오')) return 'https://www.kakaocorp.com/page/favicon.ico';
+    if (lowerPlatform.includes('네이버')) return 'https://ssl.pstatic.net/sstatic/search/favicon/favicon_32x32_240820.ico';
+    if (lowerPlatform.includes('구글')) return 'https://www.google.co.kr/favicon.ico';
+    if (lowerPlatform.includes('인터파크')) return 'https://tickets.interpark.com/favicon.ico';
+    if (lowerPlatform.includes('예스24')) return 'https://image.yes24.com/sysimage/renew/gnb/favicon_n.ico';
+    if (lowerPlatform.includes('멜론')) return 'https://www.melon.com/favicon.ico';
+    if (lowerPlatform.includes('티켓링크')) return 'https://www.ticketlink.co.kr/favicon.ico';
     
-    return '🎟️';
+    return '🌐'; // 기본값으로 이모지 사용
   }
   
   function toggleExpand() {
@@ -258,7 +258,15 @@
         <span>{formattedReservationTime}</span>
       </div>
       {#if reservationPlatform}
-        <span class="platform-icon">{platformIcon}</span>
+        <span class="platform-icon">
+          {#if platformIcon.startsWith('http') || platformIcon.startsWith('data:')}
+            <img src={platformIcon} alt={reservationPlatform} width="12" height="12" />
+          {:else if platformIcon === '🌐'}
+            <Globe size={12} />
+          {:else}
+            {platformIcon}
+          {/if}
+        </span>
       {/if}
       {#if reservationText}
         <span class="reservation-count">{reservationText}</span>
@@ -355,33 +363,42 @@
       <!-- 액션 버튼 -->
       <div class="event-actions">
         {#if isUpcoming && (reservations.length === 0 && !editingReservation)}
-          {#if !isMyReservation}
-            <Button variant="primary" className="book-button" onClick={() => toggleEditReservation(new Event('click'))}>
-              예약 추가하기
-            </Button>
-          {/if}
-          
-          {#if onNotifyClick}
-            <Button 
-              variant={hasNotification ? "primary" : "outline"} 
-              className="reminder-button {hasNotification ? 'active' : ''}" 
-              onClick={() => {
-                if (!$authStore.isLoggedIn) {
-                  alert('알림 설정을 위해서는 로그인이 필요합니다.');
-                  return;
-                }
-                onNotifyClick();
-              }}
-            >
-              {#if hasNotification}
-                <BellOff size={16} />
-                알림 해제
-              {:else}
-                <Bell size={16} />
-                알림 설정
-              {/if}
-            </Button>
-          {/if}
+          <div class="action-buttons">
+            {#if !isMyReservation}
+              <Button 
+                variant="primary" 
+                className="action-button" 
+                onClick={() => toggleEditReservation(new Event('click'))} 
+                fullWidth={false}
+              >
+                <Plus size={14} />
+                예약 추가하기
+              </Button>
+            {/if}
+            
+            {#if onNotifyClick}
+              <Button 
+                variant={hasNotification ? "primary" : "outline"} 
+                className="action-button {hasNotification ? 'active-notify' : ''}" 
+                onClick={() => {
+                  if (!$authStore.isLoggedIn) {
+                    alert('알림 설정을 위해서는 로그인이 필요합니다.');
+                    return;
+                  }
+                  onNotifyClick();
+                }}
+                fullWidth={false}
+              >
+                {#if hasNotification}
+                  <BellOff size={16} />
+                  알림 해제
+                {:else}
+                  <Bell size={16} />
+                  알림 설정
+                {/if}
+              </Button>
+            {/if}
+          </div>
         {/if}
         
         <div class="bottom-actions">
@@ -562,7 +579,14 @@
   }
   
   .platform-icon {
-    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+  }
+  
+  .platform-icon img {
+    width: 12px;
+    height: 12px;
+    object-fit: contain;
   }
   
   .reservation-count {
@@ -572,7 +596,7 @@
   }
   
   .event-details {
-    padding: 0 0.75rem 0.75rem;
+    padding: 0.75rem 0.75rem 0.75rem;
     border-top: 1px solid #eee;
     font-size: 0.85rem;
     overflow-wrap: break-word;
@@ -815,8 +839,8 @@
     flex-direction: column;
     gap: 0.75rem;
     margin-top: 0.75rem;
-    max-width: 100%;
-    width: 100%;
+    /* max-width: 100%; */
+    /* width: 100%; */
     box-sizing: border-box;
   }
   
@@ -858,16 +882,63 @@
     white-space: nowrap;
   }
   
-  .book-button {
-    background-color: var(--primary);
-    color: white;
-    width: 100%;
-    box-sizing: border-box;
+  .book-button,
+  .reminder-button,
+  .reminder-button.active {
+    display: none;
   }
   
-  .reminder-button.active {
+  .button-container, 
+  .button-container .svelte-button {
+    display: none;
+  }
+  
+  .action-buttons {
+    display: flex;
+    gap: 0.75rem;
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    margin-bottom: 0.5rem;
+  }
+  
+  .action-button {
+    min-width: 120px;
+    max-width: fit-content;
+  }
+  
+  .active-notify {
+    background-color: #4caf50 !important;
+    color: white !important;
+    border-color: #4caf50 !important;
+  }
+  
+  .notify-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    background-color: #fff;
+    color: #3b82f6;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 120px;
+    max-width: fit-content;
+  }
+  
+  .notify-button:hover {
+    background-color: #f9fafb;
+  }
+  
+  .notify-button.active {
     background-color: #4caf50;
     color: white;
+    border-color: #4caf50;
   }
   
   .detail-button {

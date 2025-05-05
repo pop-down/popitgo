@@ -13,12 +13,12 @@
     
     // 색상 변형
     const variantClasses = {
-      primary: 'bg-[--primary] text-white hover:bg-blue-600 focus:ring-blue-500',
-      secondary: 'bg-[--secondary] text-white hover:bg-green-600 focus:ring-green-500',
-      outline: 'bg-transparent border border-gray-300 text-[--neutral-700] hover:bg-gray-50 focus:ring-[--primary]',
-      text: 'bg-transparent text-[--primary] hover:bg-gray-50 focus:ring-[--primary]',
-      ghost: 'bg-transparent hover:bg-gray-100 text-[--neutral-700]',
-      icon: 'bg-transparent text-[--neutral-700] hover:bg-gray-100 rounded-full p-1'
+      primary: 'bg-[#3B82F6] text-white hover:bg-[#2563EB] focus:ring-blue-500',
+      secondary: 'bg-[#10B981] text-white hover:bg-[#059669] focus:ring-green-500',
+      outline: 'bg-transparent border border-gray-300 text-[#374151] hover:bg-gray-50 focus:ring-[#3B82F6]',
+      text: 'bg-transparent text-[#3B82F6] hover:bg-gray-50 focus:ring-[#3B82F6]',
+      ghost: 'bg-transparent hover:bg-gray-100 text-[#374151]',
+      icon: 'bg-transparent text-[#374151] hover:bg-gray-100 rounded-full p-1'
     };
     
     // 크기 변형
@@ -30,7 +30,7 @@
     };
     
     // 너비 설정
-    const widthClass = fullWidth ? 'w-full' : '';
+    const widthClass = fullWidth ? 'w-full' : 'max-w-fit';
     
     // 비활성화 상태
     const disabledClass = disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer';

@@ -11,6 +11,9 @@
   let isLoading = true;
   let error: string | null = null;
   
+  // 선택된 이벤트 ID 목록
+  let selectedEvents: string[] = [];
+  
   // 팝업 상태 관리
   let showPopup = false;
   
@@ -68,6 +71,15 @@
     showPopup = false;
     localStorage.setItem('hasSeenWelcomePopup', 'true');
   }
+  
+  // 이벤트 알림 선택 토글
+  function toggleEventSelection(id: string) {
+    if (selectedEvents.includes(id)) {
+      selectedEvents = selectedEvents.filter(eventId => eventId !== id);
+    } else {
+      selectedEvents = [...selectedEvents, id];
+    }
+  }
 </script>
 
 <div class="home-container">
@@ -110,6 +122,8 @@
               category={event.category || ''}
               organizer={event.organizer || ''}
               hasNotification={event.hasNotification || false}
+              onNotifyClick={() => toggleEventSelection(event.id)}
+              isMyReservation={event.hasNotification || selectedEvents.includes(event.id)}
             />
           </div>
         {/each}

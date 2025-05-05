@@ -337,7 +337,7 @@
               category={event.category || ''}
               organizer={event.organizer || ''}
               hasNotification={!!event.hasNotification}
-              isMyReservation={currentMode === 'my-reservations'}
+              isMyReservation={currentMode === 'my-reservations' || event.hasNotification || selectedEvents.includes(event.id)}
               onNotifyClick={() => toggleEventSelection(event.id)}
               on:select={(e) => toggleEventSelection(e.detail)}
             />
