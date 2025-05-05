@@ -40,7 +40,7 @@ function createNotificationsStore() {
       // 실제 구현에서는 아래 주석 처리된 코드를 사용합니다.
       /*
       const { data, error } = await supabase
-        .from('notifications')
+        .from('resv_notifications')
         .select('*')
         .eq('user_id', userId);
 
@@ -108,7 +108,7 @@ function createNotificationsStore() {
       // Supabase 연동시 사용할 코드
       /*
       const { data, error } = await supabase
-        .from('notifications')
+        .from('resv_notifications')
         .insert([
           {
             user_id: notification.userId,
@@ -169,7 +169,7 @@ function createNotificationsStore() {
       // Supabase 연동시 사용할 코드
       /*
       const { error } = await supabase
-        .from('notifications')
+        .from('resv_notifications')
         .update({
           type: notificationData.type,
           minutes_before: notificationData.minutesBefore,
@@ -219,7 +219,7 @@ function createNotificationsStore() {
       // Supabase 연동시 사용할 코드
       /*
       const { error } = await supabase
-        .from('notifications')
+        .from('resv_notifications')
         .delete()
         .eq('id', id);
 

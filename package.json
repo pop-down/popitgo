@@ -25,6 +25,10 @@
     "vite-plugin-pwa": "^1.0.0"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.49.4"
+    "@supabase/supabase-js": "^2.49.4",
+    "date-fns": "^4.1.0",
+    "lucide-svelte": "^0.507.0",
+    "svelte-routing": "^2.13.0",
+    "svelte-spa-router": "^4.0.1"
   }
 }

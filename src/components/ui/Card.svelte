@@ -5,6 +5,7 @@
   export let rounded: 'none' | 'sm' | 'md' | 'lg' | 'full' = 'md';
   export let onClick: (() => void) | undefined = undefined;
   export let hover = false;
+  export let className: string = '';
 
   // 카드 클래스 계산
   const getCardClasses = () => {
@@ -41,16 +42,22 @@
     // 호버 효과
     const hoverClass = hover ? 'hover:shadow-lg transition-shadow cursor-pointer' : '';
     
-    return `${baseClasses} ${paddingClasses[padding]} ${shadowClasses[shadow]} ${borderClass} ${roundedClasses[rounded]} ${hoverClass}`;
+    return `${baseClasses} ${paddingClasses[padding]} ${shadowClasses[shadow]} ${borderClass} ${roundedClasses[rounded]} ${hoverClass} ${className}`;
   };
 </script>
 
-<div 
-  class={getCardClasses()} 
-  on:click={onClick} 
-  on:keydown={(e) => e.key === 'Enter' && onClick && onClick()}
-  role={onClick ? 'button' : undefined}
-  tabindex={onClick ? 0 : undefined}
->
-  <slot />
-</div> 
+{#if onClick}
+  <div 
+    class={getCardClasses()} 
+    on:click={onClick} 
+    on:keydown={(e) => e.key === 'Enter' && onClick && onClick()}
+    role="button"
+    tabindex="0"
+  >
+    <slot />
+  </div>
+{:else}
+  <div class={getCardClasses()}>
+    <slot />
+  </div>
+{/if} 

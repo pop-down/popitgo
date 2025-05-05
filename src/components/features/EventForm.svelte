@@ -11,8 +11,18 @@
   import type { Event } from '../../stores/events';
   
   // props
-  export let event: Partial<Event> = {}; // 편집 모드에서 사용, 없으면 새 이벤트 생성
+  export let event: Partial<Event> = {
+    title: '',
+    description: '',
+    organizer: '',
+    category: '',
+    reservationStart: '',
+    reservationPlatform: '',
+    reservationLink: ''
+  };
+  
   export let isSubmitting = false;
+  export let error: string | null = null;
   
   // 내부 상태 관리
   let title = event.title || '';
@@ -73,7 +83,10 @@
   }
   
   // 이벤트 디스패처
-  const dispatch = createEventDispatcher();
+  const dispatch = createEventDispatcher<{
+    submit: Event;
+    cancel: void;
+  }>();
   
   function handleSubmit() {
     if (!validateForm()) return;
@@ -93,11 +106,61 @@
     };
     
     // 제출 이벤트 발생
-    dispatch('submit', formData);
+    dispatch('submit', formData as Event);
   }
   
   function handleCancel() {
     dispatch('cancel');
+  }
+  
+  // 카테고리 옵션
+  const categoryOptions = [
+    '콘서트',
+    '전시회',
+    '공연',
+    '페스티벌',
+    '스포츠',
+    '굿즈',
+    '기타'
+  ];
+  
+  // 플랫폼 옵션
+  const platformOptions = [
+    '인터파크',
+    '티켓링크',
+    '예스24',
+    '멜론티켓',
+    '네이버예약',
+    '카카오톡',
+    '기타'
+  ];
+  
+  // 날짜와 시간을 로컬 ISO 형식으로 변환
+  function formatDateTimeLocal(dateString: string | Date): string {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    
+    // YYYY-MM-DDThh:mm 형식으로 변환
+    return date.getFullYear() + '-' + 
+      String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+      String(date.getDate()).padStart(2, '0') + 'T' + 
+      String(date.getHours()).padStart(2, '0') + ':' + 
+      String(date.getMinutes()).padStart(2, '0');
+  }
+  
+  // ISO 형식의 문자열을 Date 객체로 변환
+  function parseISOString(dateString: string): Date {
+    return new Date(dateString);
+  }
+  
+  // reservationStart를 항상 ISO 형식으로 유지
+  $: {
+    if (event.reservationStart) {
+      if (typeof event.reservationStart === 'string' && !event.reservationStart.includes('T')) {
+        event.reservationStart = new Date(event.reservationStart).toISOString();
+      }
+    }
   }
 </script>
 
@@ -106,6 +169,12 @@
     <h2 class="text-lg font-semibold mb-4">
       {event.id ? '이벤트 수정' : '새 이벤트 등록'}
     </h2>
+    
+    {#if error}
+      <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+        {error}
+      </div>
+    {/if}
     
     <div>
       <label for="title" class="block text-sm font-medium text-neutral-700 mb-1">이벤트 제목 *</label>
@@ -138,8 +207,8 @@
           class="w-full p-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[--primary]"
         >
           <option value="">카테고리 선택</option>
-          {#each EVENT_CATEGORIES as categoryOption}
-            <option value={categoryOption.value}>{categoryOption.label}</option>
+          {#each categoryOptions as categoryOption}
+            <option value={categoryOption}>{categoryOption}</option>
           {/each}
         </select>
         {#if errors.category}
@@ -185,12 +254,16 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <label for="reservationPlatform" class="block text-sm font-medium text-neutral-700 mb-1">예약 플랫폼</label>
-        <Input 
+        <select
           id="reservationPlatform"
-          type="text"
           bind:value={reservationPlatform}
-          placeholder="예: 인터파크, 네이버, 카카오 등"
-        />
+          class="w-full p-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[--primary]"
+        >
+          <option value="">플랫폼 선택</option>
+          {#each platformOptions as platform}
+            <option value={platform}>{platform}</option>
+          {/each}
+        </select>
       </div>
       
       <div>

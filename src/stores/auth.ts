@@ -8,6 +8,7 @@ export interface UserInfo {
   email?: string;
   fullName?: string;
   avatarUrl?: string;
+  role?: string; // 'user', 'admin', 'super_admin'
 }
 
 // 인증 상태 인터페이스
@@ -38,12 +39,24 @@ function createAuthStore() {
       const user = await getCurrentUser();
       
       if (user) {
+        // 사용자 프로필 정보 가져오기 (역할 포함)
+        const { data: profile, error: profileError } = await supabase
+          .from('resv_profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) {
+          console.error('프로필 정보를 가져오는데 실패했습니다:', profileError.message);
+        }
+          
         // Supabase 사용자 데이터를 내부 형식으로 변환
         const userInfo: UserInfo = {
           id: user.id,
           email: user.email || undefined,
           fullName: user.user_metadata?.full_name,
           avatarUrl: user.user_metadata?.avatar_url,
+          role: profile?.role || 'user',
         };
         
         set({
@@ -71,7 +84,36 @@ function createAuthStore() {
     }
   };
 
-  // 로그인 처리
+  // 관리자 권한 확인
+  const checkAdminAccess = async (): Promise<{isAdmin: boolean, role?: string}> => {
+    try {
+      const user = await getCurrentUser();
+      if (!user) {
+        return { isAdmin: false };
+      }
+      
+      const { data: profile, error } = await supabase
+        .from('resv_profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+        
+      if (error) {
+        throw error;
+      }
+      
+      const isAdmin = profile && ['admin', 'super_admin'].includes(profile.role);
+      return {
+        isAdmin,
+        role: profile?.role
+      };
+    } catch (error) {
+      console.error('관리자 권한 확인 중 오류:', error);
+      return { isAdmin: false };
+    }
+  };
+
+  // 카카오 로그인 처리
   const login = async () => {
     try {
       update(state => ({ ...state, isLoading: true, error: null }));
@@ -91,6 +133,30 @@ function createAuthStore() {
         ...state,
         isLoading: false,
         error: error instanceof Error ? error.message : '로그인 중 오류가 발생했습니다',
+      }));
+    }
+  };
+  
+  // 구글 로그인 처리
+  const loginWithGoogle = async () => {
+    try {
+      update(state => ({ ...state, isLoading: true, error: null }));
+      
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      update(state => ({
+        ...state,
+        isLoading: false,
+        error: error instanceof Error ? error.message : '구글 로그인 중 오류가 발생했습니다',
       }));
     }
   };
@@ -141,8 +207,10 @@ function createAuthStore() {
   return {
     subscribe,
     login,
+    loginWithGoogle,
     logout,
     refresh: fetchUserInfo,
+    checkAdminAccess
   };
 }
 
