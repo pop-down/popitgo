@@ -113,9 +113,15 @@ function createEventsStore() {
           
           if (!notificationError && notifications && notifications.length > 0) {
             const eventIdsWithNotifications = new Set(notifications.map(n => n.event_id));
+            console.log('사용자의 알림이 설정된 이벤트 목록:', Array.from(eventIdsWithNotifications));
             events.forEach(event => {
               event.hasNotification = eventIdsWithNotifications.has(event.id);
+              if (event.hasNotification) {
+                console.log(`이벤트 '${event.title}'에 알림이 설정됨`);
+              }
             });
+          } else {
+            console.log('알림 정보가 없거나 가져오는 중 오류가 발생했습니다:', notificationError);
           }
         } catch (error) {
           console.error('알림 정보 가져오기 오류:', error);

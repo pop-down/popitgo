@@ -70,7 +70,7 @@
   }
 </script>
 
-<header class="bg-white border-b border-gray-200 py-3">
+<header class="bg-white border-b border-gray-200 py-3 mb-6">
   <div class="container-app flex justify-between items-center">
     <div class="logo cursor-pointer" on:click={goToHome} on:keydown={(e) => e.key === 'Enter' && goToHome()} tabindex="0" role="button">
       <h1 class="text-xl font-bold text-blue-600">PopItGo</h1>

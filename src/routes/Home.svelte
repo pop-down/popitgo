@@ -86,7 +86,7 @@
   <!-- 다가오는 이벤트 섹션 -->
   <section class="upcoming-events">
     <div class="section-header">
-      <h2>곧 예매가 시작됩니다</h2>
+      <h2>다가오는 예약일정</h2>
       <Button variant="ghost" size="sm" onClick={navigateToEvents} className="view-more">
         <span>더보기</span>
         <ChevronRight size={16} />
