@@ -8,7 +8,7 @@ export default defineConfig({
     svelte(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
+      includeAssets: ['robots.txt', 'vite.svg'],
       manifest: {
         name: 'PopItGo - 팝업 예약 관리',
         short_name: 'PopItGo',
@@ -17,16 +17,14 @@ export default defineConfig({
         background_color: '#ffffff',
         icons: [
           {
-            src: '/icons/icon-192x192.png',
+            src: '/vite.svg',
             sizes: '192x192',
-            type: 'image/png'
-          },
-          {
-            src: '/icons/icon-512x512.png',
-            sizes: '512x512',
-            type: 'image/png'
+            type: 'image/svg+xml'
           }
-        ]
+        ],
+        start_url: '/',
+        display: 'standalone',
+        orientation: 'portrait'
       }
     })
   ],
