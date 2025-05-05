@@ -888,8 +888,7 @@
     display: none;
   }
   
-  .button-container, 
-  .button-container .svelte-button {
+  .button-container {
     display: none;
   }
   
