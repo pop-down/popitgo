@@ -277,7 +277,7 @@
   </div>
   
   {#if expanded}
-    <div class="event-details" transition:fly={{ y: -20, duration: 200 }}>
+    <div class="event-details" transition:fly={{ y: -20, duration: 200 }} on:click|stopPropagation>
       {#if description}
         <p class="event-description">{description}</p>
       {/if}
@@ -330,11 +330,11 @@
       
       <!-- 예약 추가 폼 -->
       {#if editingReservation}
-        <div class="reservation-form">
+        <form class="reservation-form" on:submit|preventDefault>
           <h3 class="form-title">새 예약 추가</h3>
           <div class="form-row">
             <label for="visitTime">방문 예정 시간</label>
-            <select id="visitTime" bind:value={newReservation.visitTime}>
+            <select id="visitTime" bind:value={newReservation.visitTime} on:click|stopPropagation>
               <option value={0}>이벤트 시작 시간</option>
               <option value={15}>15분 전</option>
               <option value={30}>30분 전</option>
@@ -345,11 +345,11 @@
           </div>
           <div class="form-row">
             <label for="seats">좌석 정보 (선택)</label>
-            <input type="text" id="seats" bind:value={newReservation.seats} placeholder="예: A열 22번">
+            <input type="text" id="seats" bind:value={newReservation.seats} placeholder="예: A열 22번" on:click|stopPropagation>
           </div>
           <div class="form-row">
             <label for="memo">메모 (선택)</label>
-            <textarea id="memo" bind:value={newReservation.memo} placeholder="예약 관련 메모"></textarea>
+            <textarea id="memo" bind:value={newReservation.memo} placeholder="예약 관련 메모" on:click|stopPropagation></textarea>
           </div>
           <div class="form-actions">
             <button class="cancel-button" on:click={toggleEditReservation}>
@@ -359,7 +359,7 @@
               예약 추가
             </button>
           </div>
-        </div>
+        </form>
       {/if}
       
       <!-- 액션 버튼 -->

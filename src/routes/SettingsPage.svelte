@@ -69,6 +69,11 @@
   
   // 설정 저장
   async function saveSettings() {
+    if (!$authStore.isLoggedIn) {
+      alert('로그인이 필요한 기능입니다.');
+      return;
+    }
+    
     isLoading = true;
     error = null;
     
@@ -117,18 +122,30 @@
   
   // 프로필 편집 페이지로 이동
   function goToProfileEdit() {
+    if (!$authStore.isLoggedIn) {
+      alert('로그인이 필요한 기능입니다.');
+      return;
+    }
     // 프로필 편집 페이지 구현 필요
     alert('프로필 편집 기능은 개발 중입니다.');
   }
   
   // 비밀번호 변경 페이지로 이동
   function goToPasswordChange() {
+    if (!$authStore.isLoggedIn) {
+      alert('로그인이 필요한 기능입니다.');
+      return;
+    }
     // 비밀번호 변경 페이지 구현 필요
     alert('비밀번호 변경 기능은 개발 중입니다.');
   }
   
   // 개인정보 설정 페이지로 이동
   function goToPrivacySettings() {
+    if (!$authStore.isLoggedIn) {
+      alert('로그인이 필요한 기능입니다.');
+      return;
+    }
     // 개인정보 설정 페이지 구현 필요
     alert('개인정보 설정 기능은 개발 중입니다.');
   }
@@ -155,21 +172,21 @@
           <ChevronRight size={18} />
         </div>
         
-        <!-- <div class="setting-item clickable" on:click={goToPasswordChange} on:keydown={(e) => e.key === 'Enter' && goToPasswordChange()} tabindex="0" role="button">
+        <div class="setting-item clickable" on:click={goToPasswordChange} on:keydown={(e) => e.key === 'Enter' && goToPasswordChange()} tabindex="0" role="button">
           <div class="setting-info">
             <h3>비밀번호 변경</h3>
             <p>계정 비밀번호를 변경합니다.</p>
           </div>
           <ChevronRight size={18} />
-        </div> -->
+        </div>
         
-        <!-- <div class="setting-item clickable" on:click={goToPrivacySettings} on:keydown={(e) => e.key === 'Enter' && goToPrivacySettings()} tabindex="0" role="button">
+        <div class="setting-item clickable" on:click={goToPrivacySettings} on:keydown={(e) => e.key === 'Enter' && goToPrivacySettings()} tabindex="0" role="button">
           <div class="setting-info">
             <h3>개인정보 설정</h3>
             <p>개인정보 공개 범위 및 관리 설정</p>
           </div>
           <ChevronRight size={18} />
-        </div> -->
+        </div>
         
         <div class="setting-item logout" on:click={handleLogout} on:keydown={(e) => e.key === 'Enter' && handleLogout()} tabindex="0" role="button">
           <div class="setting-info">
@@ -192,46 +209,46 @@
       <Bell size={18} /> 알림 설정
     </h2>
     <Card>
-      <div class="setting-item">
+      <div class="setting-item" class:disabled={!$authStore.isLoggedIn}>
         <div class="setting-info">
           <h3>푸시 알림</h3>
           <p>브라우저 또는 앱 푸시 알림을 받습니다.</p>
         </div>
         <label class="toggle">
-          <input type="checkbox" bind:checked={pushNotifications}>
+          <input type="checkbox" bind:checked={pushNotifications} disabled={!$authStore.isLoggedIn}>
           <span class="toggle-slider"></span>
         </label>
       </div>
       
-      <div class="setting-item">
+      <div class="setting-item" class:disabled={!$authStore.isLoggedIn}>
         <div class="setting-info">
           <h3>이메일 알림</h3>
           <p>이메일로 알림을 받습니다.</p>
         </div>
         <label class="toggle">
-          <input type="checkbox" bind:checked={emailNotifications}>
+          <input type="checkbox" bind:checked={emailNotifications} disabled={!$authStore.isLoggedIn}>
           <span class="toggle-slider"></span>
         </label>
       </div>
       
-      <div class="setting-item">
+      <div class="setting-item" class:disabled={!$authStore.isLoggedIn}>
         <div class="setting-info">
           <h3>기본 알림 시간</h3>
           <p>예약 시작 전 알림을 받을 기본 시간입니다.</p>
         </div>
-        <select bind:value={defaultNotificationTime} class="select-input">
+        <select bind:value={defaultNotificationTime} class="select-input" disabled={!$authStore.isLoggedIn}>
           {#each notificationTimeOptions as option}
             <option value={option.value}>{option.label}</option>
           {/each}
         </select>
       </div>
       
-      <div class="setting-item">
+      <div class="setting-item" class:disabled={!$authStore.isLoggedIn}>
         <div class="setting-info">
           <h3>방문 시간 설정</h3>
           <p>이벤트 시작 기준 방문 예정 시간입니다.</p>
         </div>
-        <select bind:value={defaultVisitTime} class="select-input">
+        <select bind:value={defaultVisitTime} class="select-input" disabled={!$authStore.isLoggedIn}>
           {#each visitTimeOptions as option}
             <option value={option.value}>{option.label}</option>
           {/each}
@@ -289,7 +306,7 @@
   </section>
   
   <div class="button-container">
-    <Button variant="primary" onClick={saveSettings} disabled={isLoading}>
+    <Button variant="primary" onClick={saveSettings} disabled={isLoading || !$authStore.isLoggedIn}>
       {isLoading ? '저장 중...' : '설정 저장'}
     </Button>
   </div>
@@ -335,6 +352,11 @@
     border-bottom: none;
   }
   
+  .setting-item.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
   .setting-info h3 {
     font-size: 1rem;
     font-weight: 500;
@@ -353,6 +375,11 @@
     border-radius: 0.25rem;
     background-color: white;
     min-width: 120px;
+  }
+  
+  .select-input:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
   }
   
   .clickable {
@@ -379,6 +406,11 @@
     opacity: 0;
     width: 0;
     height: 0;
+  }
+  
+  .toggle input:disabled + .toggle-slider {
+    background-color: #ccc;
+    cursor: not-allowed;
   }
   
   .toggle-slider {

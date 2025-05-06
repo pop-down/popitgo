@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { authStore } from '@stores/auth';
-  import Button from '@components/ui/Button.svelte';
   import { User, Home, Download, LogOut, LogIn } from 'lucide-svelte';
   
   let isAppInstalled = false;
@@ -9,6 +8,12 @@
   let isAuthenticated = false;
   let username = '';
   let isLoading = true;
+  let isLoginPage = false;
+  
+  // 현재 페이지가 로그인 페이지인지 확인하는 함수
+  function checkIsLoginPage() {
+    isLoginPage = window.location.pathname === '/login';
+  }
   
   // PWA 설치 이벤트 처리
   onMount(() => {
@@ -33,9 +38,21 @@
       username = state.user?.email || '';
       isLoading = state.isLoading;
     });
+
+    // 초기 페이지 확인
+    checkIsLoginPage();
+    
+    // 페이지 이동 감지
+    const handleLocationChange = () => {
+      checkIsLoginPage();
+    };
+    
+    // 주기적으로 페이지 상태 확인
+    const intervalId = setInterval(handleLocationChange, 100);
     
     return () => {
       unsubscribe();
+      clearInterval(intervalId);
     };
   });
   
@@ -78,22 +95,31 @@
     
     <div class="flex items-center gap-3">
       {#if !isAppInstalled && deferredPrompt}
-        <Button variant="outline" size="sm" onClick={installApp}>
-          <Download size={16} class="mr-1" />
-          앱 설치
-        </Button>
+        <button class="p-2 hover:bg-gray-100 rounded-full transition-colors" on:click={installApp} aria-label="앱 설치">
+          <Download size={20} class="text-gray-600" />
+        </button>
       {/if}
       
-      {#if isAuthenticated}
-        <Button variant="outline" size="sm" onClick={logout}>
-          <LogOut size={16} class="mr-1" />
-          로그아웃
-        </Button>
-      {:else}
-        <Button variant="outline" size="sm" onClick={goToLogin}>
-          <LogIn size={16} class="mr-1" />
-          로그인
-        </Button>
+      {#if !isLoading}
+        {#if !isLoginPage}
+          {#if isAuthenticated}
+            <button 
+              class="p-2 hover:bg-gray-100 rounded-full transition-colors" 
+              on:click={logout}
+              aria-label="로그아웃"
+            >
+              <LogOut size={20} class="text-gray-600" />
+            </button>
+          {:else}
+            <button 
+              class="p-2 hover:bg-gray-100 rounded-full transition-colors" 
+              on:click={goToLogin}
+              aria-label="로그인"
+            >
+              <LogIn size={20} class="text-gray-600" />
+            </button>
+          {/if}
+        {/if}
       {/if}
     </div>
   </div>
