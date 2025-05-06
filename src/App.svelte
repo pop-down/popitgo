@@ -12,6 +12,8 @@
   import NotFound from './routes/NotFound.svelte';
   import { authStore, type UserInfo } from './stores/auth';
   import { writable } from 'svelte/store';
+  import ReservationsPage from './routes/reservations/+page.svelte';
+  import { get } from 'svelte/store';
   
   // 인증 사용자 정보
   let user: UserInfo | null = null;
@@ -24,7 +26,7 @@
   
   // 경로별 컴포넌트 매핑 (인덱스 시그니처 추가)
   type RouteComponents = {
-    [key: string]: typeof Home | typeof EventPage | typeof LoginPage | typeof AdminPage | typeof AuthCallback | typeof EventDetailPage | typeof SettingsPage | typeof NotFound;
+    [key: string]: typeof Home | typeof EventPage | typeof LoginPage | typeof AdminPage | typeof AuthCallback | typeof EventDetailPage | typeof SettingsPage | typeof NotFound | typeof ReservationsPage;
   };
   
   const routes: RouteComponents = {
@@ -33,7 +35,8 @@
     '/login': LoginPage,
     '/admin': AdminPage,
     '/auth/callback': AuthCallback,
-    '/settings': SettingsPage
+    '/settings': SettingsPage,
+    '/reservations': ReservationsPage
   };
   
   // 현재 표시할 컴포넌트
@@ -43,6 +46,7 @@
   function handlePathChange() {
     const pathname = window.location.pathname;
     currentPath.set(pathname);
+    console.log('[handlePathChange] pathname:', pathname);
     
     // 이벤트 상세 페이지 (동적 라우트)
     if (pathname.startsWith('/events/') && pathname !== '/events/') {
@@ -63,6 +67,8 @@
   // 페이지 이동 함수
   function navigateTo(path: string) {
     window.history.pushState({}, '', path);
+    currentPath.set(path);
+    console.log('[navigateTo] path:', path);
     handlePathChange();
   }
   
@@ -105,6 +111,8 @@
       authStore.logout();
     }
   }
+
+  $: console.log('[NAV] $currentPath:', $currentPath);
 </script>
 
 <div class="min-h-screen flex flex-col bg-gray-50">
@@ -119,6 +127,7 @@
          on:click|preventDefault={() => navigateTo('/')} 
          on:keydown={(e) => handleKeyNav(e, '/')}
          class="flex flex-col items-center px-2 py-1 text-gray-600 hover:text-blue-600"
+         class:text-blue-600={$currentPath === '/'}
          tabindex="0"
          role="button"
          aria-label="홈"
@@ -132,6 +141,7 @@
          on:click|preventDefault={() => navigateTo('/events')} 
          on:keydown={(e) => handleKeyNav(e, '/events')}
          class="flex flex-col items-center px-2 py-1 text-gray-600 hover:text-blue-600"
+         class:text-blue-600={$currentPath.startsWith('/events')}
          tabindex="0"
          role="button"
          aria-label="이벤트"
@@ -141,10 +151,11 @@
         </svg>
         <span class="text-xs">이벤트</span>
       </a>
-      <a href="/events?tab=my-reservations" 
-         on:click|preventDefault={() => navigateTo('/events?tab=my-reservations')} 
-         on:keydown={(e) => handleKeyNav(e, '/events?tab=my-reservations')}
+      <a href="/reservations" 
+         on:click|preventDefault={() => navigateTo('/reservations')} 
+         on:keydown={(e) => handleKeyNav(e, '/reservations')}
          class="flex flex-col items-center px-2 py-1 text-gray-600 hover:text-blue-600"
+         class:text-blue-600={$currentPath.startsWith('/reservations')}
          tabindex="0"
          role="button"
          aria-label="예약"
@@ -158,6 +169,7 @@
          on:click|preventDefault={() => navigateTo('/settings')} 
          on:keydown={(e) => handleKeyNav(e, '/settings')}
          class="flex flex-col items-center px-2 py-1 text-gray-600 hover:text-blue-600"
+         class:text-blue-600={$currentPath.startsWith('/settings')}
          tabindex="0"
          role="button"
          aria-label="설정"
@@ -215,7 +227,7 @@
     </nav>
   </main>
   
-  <Footer />
+  <Footer navigateTo={navigateTo} currentPath={$currentPath} />
 </div>
 
 <style>

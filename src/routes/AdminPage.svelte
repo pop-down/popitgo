@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { authStore } from '../stores/auth';
-  import { supabase } from '../services/supabase';
+  import { supabase } from '@services/supabase';
   import { navigate } from 'svelte-routing';
   
   // 상태 변수들

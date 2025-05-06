@@ -100,7 +100,7 @@
 </header>
 
 <style>
-  .app-header {
+  /* .app-header {
     background-color: white;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     position: sticky;
@@ -116,7 +116,7 @@
     max-width: 1200px;
     margin: 0 auto;
   }
-  
+   */
   .logo {
     font-weight: bold;
     font-size: 1.2rem;
@@ -127,7 +127,7 @@
     display: flex;
     align-items: center;
   }
-  
+/*   
   .main-nav {
     display: flex;
     align-items: center;
@@ -177,5 +177,5 @@
   
   .logout-button {
     color: #f44336;
-  }
+  } */
 </style> 

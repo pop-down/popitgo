@@ -10,7 +10,6 @@
   import { ko } from 'date-fns/locale';
   import { authStore } from '@stores/auth';
   import type { Event } from '@stores/events';
-  import type { EventCategory } from '@lib/types';
   import { EVENT_CATEGORIES } from '@lib/constants/app';
   
   export let id: string;
@@ -161,19 +160,19 @@
   }
   
   // 상세 페이지로 이동
-  function navigateToDetail(e: Event) {
+  function navigateToDetail(e: MouseEvent | KeyboardEvent) {
     e.stopPropagation(); // 이벤트 버블링 방지
     window.location.href = `/events/${id}`;
   }
   
   // 예약 편집 모드 토글
-  function toggleEditReservation(e: Event) {
+  function toggleEditReservation(e: MouseEvent | KeyboardEvent) {
     e.stopPropagation(); // 이벤트 버블링 방지
     editingReservation = !editingReservation;
   }
   
   // 새 예약 추가
-  function addReservation(e: Event) {
+  function addReservation(e: MouseEvent | KeyboardEvent) {
     e.stopPropagation(); // 이벤트 버블링 방지
     
     if (!$authStore.isLoggedIn) {
@@ -209,7 +208,7 @@
   }
   
   // 예약 삭제
-  function removeReservation(e: Event, resId: string) {
+  function removeReservation(e: MouseEvent | KeyboardEvent, resId: string) {
     e.stopPropagation(); // 이벤트 버블링 방지
     
     if (confirm('이 예약을 삭제하시겠습니까?')) {
@@ -371,7 +370,7 @@
               <Button 
                 variant="primary" 
                 className="action-button" 
-                onClick={() => toggleEditReservation(new Event('click'))} 
+                onClick={() => toggleEditReservation(new MouseEvent('click'))} 
                 fullWidth={false}
               >
                 <Plus size={14} />

@@ -1,11 +1,24 @@
 import { writable, get as getStore } from 'svelte/store';
-import { supabase } from '../services/supabase';
+import { supabase } from '@services/supabase';
+import { notificationService } from '@services/supabase';
 
 // 알림 인터페이스
 export interface Notification {
   id: string;
   userId: string;
   eventId: string;
+  type: 'push' | 'email' | 'both';
+  minutesBefore: number;
+  isActive: boolean;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+}
+
+// 서비스에서 반환되는 알림 인터페이스
+interface ServiceNotification {
+  id: number;
+  userId: string;
+  eventId: number;
   type: 'push' | 'email' | 'both';
   minutesBefore: number;
   isActive: boolean;
@@ -33,69 +46,29 @@ function createNotificationsStore() {
   const { subscribe, set, update } = store;
 
   // 알림 목록 가져오기
-  const fetchNotifications = async (userId: string) => {
+  const fetchNotifications = async () => {
     try {
-      update(state => ({ ...state, isLoading: true, error: null }));
-
-      // 실제 구현에서는 아래 주석 처리된 코드를 사용합니다.
-      /*
-      const { data, error } = await supabase
-        .from('resv_notifications')
-        .select('*')
-        .eq('user_id', userId);
-
-      if (error) {
-        throw error;
-      }
-
-      // 데이터 변환 (스네이크 케이스 -> 카멜 케이스)
-      const notifications = data.map(item => ({
-        id: item.id,
-        userId: item.user_id,
-        eventId: item.event_id,
-        type: item.type,
-        minutesBefore: item.minutes_before,
-        isActive: item.is_active,
-        createdAt: new Date(item.created_at),
-        updatedAt: new Date(item.updated_at)
-      }));
-      */
-
-      // 샘플 데이터
-      const sampleNotifications: Notification[] = [
-        {
-          id: '1',
-          userId,
-          eventId: '1',
-          type: 'push',
-          minutesBefore: 60,
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        {
-          id: '2',
-          userId,
-          eventId: '2',
-          type: 'email',
-          minutesBefore: 1440, // 24시간
-          isActive: false,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-      ];
-
-      // 데이터 설정
+      const notifications = await notificationService.list();
       update(state => ({
         ...state,
-        notifications: sampleNotifications,
+        notifications: notifications.map((n: ServiceNotification) => ({
+          id: n.id.toString(),
+          userId: n.userId,
+          eventId: n.eventId.toString(),
+          type: n.type,
+          minutesBefore: n.minutesBefore,
+          isActive: n.isActive,
+          createdAt: n.createdAt,
+          updatedAt: n.updatedAt
+        })),
         isLoading: false
       }));
     } catch (error) {
+      console.error('알림 목록을 가져오는 중 오류 발생:', error);
       update(state => ({
         ...state,
-        isLoading: false,
-        error: error instanceof Error ? error.message : '알림을 불러오는 중 오류가 발생했습니다'
+        error: '알림 목록을 가져오는데 실패했습니다.',
+        isLoading: false
       }));
     }
   };
@@ -103,110 +76,43 @@ function createNotificationsStore() {
   // 알림 추가
   const addNotification = async (notification: Omit<Notification, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
-      update(state => ({ ...state, isLoading: true, error: null }));
-
-      // Supabase 연동시 사용할 코드
-      /*
-      const { data, error } = await supabase
-        .from('resv_notifications')
-        .insert([
-          {
-            user_id: notification.userId,
-            event_id: notification.eventId,
-            type: notification.type,
-            minutes_before: notification.minutesBefore,
-            is_active: notification.isActive
-          }
-        ])
-        .select();
-
-      if (error) {
-        throw error;
-      }
-
-      const newNotification = {
-        id: data[0].id,
-        userId: data[0].user_id,
-        eventId: data[0].event_id,
-        type: data[0].type,
-        minutesBefore: data[0].minutes_before,
-        isActive: data[0].is_active,
-        createdAt: new Date(data[0].created_at),
-        updatedAt: new Date(data[0].updated_at)
-      };
-      */
-
-      // 임시 구현 (실제로는 서버에서 ID를 생성)
-      const newNotification: Notification = {
-        id: Math.random().toString(36).substr(2, 9), // 임의의 ID 생성
-        ...notification,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-
+      const result = await notificationService.create({
+        eventId: parseInt(notification.eventId),
+        type: notification.type,
+        minutesBefore: notification.minutesBefore
+      });
+      
       update(state => ({
         ...state,
-        notifications: [...state.notifications, newNotification],
-        isLoading: false
+        notifications: [...state.notifications, {
+          ...notification,
+          id: result.toString(),
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }]
       }));
-
-      return newNotification;
     } catch (error) {
-      update(state => ({
-        ...state,
-        isLoading: false,
-        error: error instanceof Error ? error.message : '알림을 추가하는 중 오류가 발생했습니다'
-      }));
+      console.error('알림 추가 중 오류 발생:', error);
       throw error;
     }
   };
 
   // 알림 수정
-  const updateNotification = async (id: string, notificationData: Partial<Omit<Notification, 'id' | 'userId' | 'eventId' | 'createdAt' | 'updatedAt'>>) => {
+  const updateNotification = async (id: string, notification: Partial<Omit<Notification, 'id' | 'createdAt' | 'updatedAt'>>) => {
     try {
-      update(state => ({ ...state, isLoading: true, error: null }));
-
-      // Supabase 연동시 사용할 코드
-      /*
-      const { error } = await supabase
-        .from('resv_notifications')
-        .update({
-          type: notificationData.type,
-          minutes_before: notificationData.minutesBefore,
-          is_active: notificationData.isActive
-        })
-        .eq('id', id);
-
-      if (error) {
-        throw error;
-      }
-      */
-
-      // 임시 구현
-      update(state => {
-        const notifications = state.notifications.map(notification => {
-          if (notification.id === id) {
-            return {
-              ...notification,
-              ...notificationData,
-              updatedAt: new Date()
-            };
-          }
-          return notification;
-        });
-
-        return {
-          ...state,
-          notifications,
-          isLoading: false
-        };
+      await notificationService.update(parseInt(id), {
+        type: notification.type,
+        minutesBefore: notification.minutesBefore
       });
-    } catch (error) {
+      
       update(state => ({
         ...state,
-        isLoading: false,
-        error: error instanceof Error ? error.message : '알림을 수정하는 중 오류가 발생했습니다'
+        notifications: state.notifications.map(n => 
+          n.id === id ? { ...n, ...notification, updatedAt: new Date() } : n
+        )
       }));
+    } catch (error) {
+      console.error('알림 수정 중 오류 발생:', error);
       throw error;
     }
   };
@@ -214,65 +120,58 @@ function createNotificationsStore() {
   // 알림 삭제
   const deleteNotification = async (id: string) => {
     try {
-      update(state => ({ ...state, isLoading: true, error: null }));
-
-      // Supabase 연동시 사용할 코드
-      /*
-      const { error } = await supabase
-        .from('resv_notifications')
-        .delete()
-        .eq('id', id);
-
-      if (error) {
-        throw error;
-      }
-      */
-
-      // 임시 구현
+      await notificationService.delete(parseInt(id));
+      
       update(state => ({
         ...state,
-        notifications: state.notifications.filter(notification => notification.id !== id),
-        isLoading: false
+        notifications: state.notifications.filter(n => n.id !== id)
       }));
     } catch (error) {
-      update(state => ({
-        ...state,
-        isLoading: false,
-        error: error instanceof Error ? error.message : '알림을 삭제하는 중 오류가 발생했습니다'
-      }));
+      console.error('알림 삭제 중 오류 발생:', error);
       throw error;
     }
   };
 
-  // 알림 활성화/비활성화 토글
+  // 알림 상태 토글
   const toggleNotificationStatus = async (id: string) => {
     try {
-      update(state => ({ ...state, isLoading: true, error: null }));
-
-      // 현재 알림 상태 확인
-      const currentState = getStore(store);
-      const notification = currentState.notifications.find((n: Notification) => n.id === id);
+      const notification = getStore(store).notifications.find(n => n.id === id);
+      if (!notification) throw new Error('알림을 찾을 수 없습니다.');
       
-      if (!notification) {
-        throw new Error('알림을 찾을 수 없습니다');
-      }
-
-      // 상태 업데이트
-      await updateNotification(id, { isActive: !notification.isActive });
-    } catch (error) {
+      await notificationService.update(parseInt(id), {
+        isActive: !notification.isActive
+      });
+      
       update(state => ({
         ...state,
-        isLoading: false,
-        error: error instanceof Error ? error.message : '알림 상태를 변경하는 중 오류가 발생했습니다'
+        notifications: state.notifications.map(n => 
+          n.id === id ? { ...n, isActive: !n.isActive, updatedAt: new Date() } : n
+        )
       }));
+    } catch (error) {
+      console.error('알림 상태 변경 중 오류 발생:', error);
       throw error;
     }
   };
 
-  // 이벤트 ID로 알림 찾기
-  const getNotificationsByEventId = (eventId: string) => {
-    const currentState = getStore(store);
-    return currentState.notifications.filter(notification => notification.eventId === eventId);
+  // 이벤트별 알림 가져오기
+  const getNotificationsByEventId = async (eventId: string) => {
+    try {
+      const notifications = await notificationService.listByEvent(parseInt(eventId));
+      return notifications.map((n: ServiceNotification) => ({
+        id: n.id.toString(),
+        userId: n.userId,
+        eventId: n.eventId.toString(),
+        type: n.type,
+        minutesBefore: n.minutesBefore,
+        isActive: n.isActive,
+        createdAt: n.createdAt,
+        updatedAt: n.updatedAt
+      }));
+    } catch (error) {
+      console.error('이벤트별 알림을 가져오는 중 오류 발생:', error);
+      throw error;
+    }
   };
 
   return {

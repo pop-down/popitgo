@@ -1,6 +1,6 @@
 // import { supabase } from '../../../services/supabase';
 
-import { supabase } from "../services/supabase";
+import { supabase } from "@services/supabase";
 
 export type NotificationType = 'reservation_created' | 'reservation_confirmed' | 'reservation_cancelled';
 

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { supabase } from '../../services/supabase';
+  import { supabase } from '../services/supabase';
   import type { BoothActivity } from '../../lib/types';
   import { format } from 'date-fns';
   import { ko } from 'date-fns/locale';
@@ -25,14 +25,9 @@
       loading = true;
       error = null;
 
-      const { data, error: err } = await supabase
-        .from('booth_activities')
-        .select('*')
-        .eq('is_reservation_available', true)
-        .order('start_date', { ascending: true });
-
+      const { data, error: err } = await supabase.rpc('get_resv_booth_activities', {});
       if (err) throw err;
-      activities = data;
+      activities = data || [];
     } catch (e) {
       error = e.message;
     } finally {
@@ -43,7 +38,7 @@
   async function handleSubmit() {
     try {
       const { data, error: err } = await supabase
-        .rpc('create_visit_reservation', {
+        .rpc('create_resv_visit', {
           p_booth_activity_id: formData.booth_activity_id,
           p_visit_datetime: formData.visit_datetime,
           p_visitor_name: formData.visitor_name,

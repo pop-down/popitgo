@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import { supabase, getCurrentUser } from '../services/supabase';
+import { supabase, getCurrentUser } from '@services/supabase';
 import type { User } from '@supabase/supabase-js';
 
 // 사용자 정보 인터페이스
@@ -40,11 +40,9 @@ function createAuthStore() {
       
       if (user) {
         // 사용자 프로필 정보 가져오기 (역할 포함)
-        const { data: profile, error: profileError } = await supabase
-          .from('resv_profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
+        const { data: profile, error: profileError } = await supabase.rpc('get_profile_by_id', {
+          p_user_id: user.id
+        });
 
         if (profileError) {
           console.error('프로필 정보를 가져오는데 실패했습니다:', profileError.message);
@@ -92,11 +90,9 @@ function createAuthStore() {
         return { isAdmin: false };
       }
       
-      const { data: profile, error } = await supabase
-        .from('resv_profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
+      const { data: profile, error } = await supabase.rpc('get_profile_by_id', {
+        p_user_id: user.id
+      });
         
       if (error) {
         throw error;

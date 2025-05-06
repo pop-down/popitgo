@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { supabase } from '$lib/supabaseClient';
+  import { supabase } from '@services/supabase';
   import type { VisitReservation } from '$lib/types';
   import { format } from 'date-fns';
   import { ko } from 'date-fns/locale';
@@ -19,27 +19,14 @@
       loading = true;
       error = null;
 
-      let query = supabase
-        .from('visit_reservations')
-        .select('*')
-        .order('visit_datetime', { ascending: false });
-
-      if (statusFilter !== 'all') {
-        query = query.eq('status', statusFilter);
-      }
-
-      if (dateRange.start) {
-        query = query.gte('visit_datetime', dateRange.start);
-      }
-
-      if (dateRange.end) {
-        query = query.lte('visit_datetime', dateRange.end);
-      }
-
-      const { data, error: err } = await query;
+      const { data, error: err } = await supabase.rpc('get_resv_visits', {
+        p_status: statusFilter !== 'all' ? statusFilter : null,
+        p_start_date: dateRange.start ? dateRange.start : null,
+        p_end_date: dateRange.end ? dateRange.end : null
+      });
 
       if (err) throw err;
-      reservations = data;
+      reservations = data || [];
     } catch (e) {
       error = e.message;
     } finally {

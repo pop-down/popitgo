@@ -11,6 +11,7 @@
     "module": "esnext",
     "moduleResolution": "node",
     "baseUrl": ".",
+    "outDir": "./dist",
     "paths": {
       "@/*": ["src/*"],
       "@components/*": ["src/components/*"],

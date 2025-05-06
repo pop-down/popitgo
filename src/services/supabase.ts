@@ -2,8 +2,8 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 // Supabase 환경 변수
 // 개발 중에는 하드코딩된 값을 사용할 수 있습니다
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // 환경 변수 확인
 if (!supabaseUrl || !supabaseAnonKey) {
@@ -199,4 +199,381 @@ export const signOut = async () => {
 // 서비스 오류 생성 유틸리티 함수
 function createServiceError(code: string, message: string, details?: unknown): ServiceError {
   return { code, message, details };
-} 
+}
+
+// 이벤트 관련 RPC 함수
+export const eventService = {
+  create: async (event: {
+    title: string;
+    description?: string;
+    organizer?: string;
+    category?: string;
+    reservationStart: Date;
+    reservationEnd: Date;
+    reservationPlatform?: string;
+    reservationLink?: string;
+  }) => {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    const { data, error } = await supabase.rpc('create_event', {
+      p_title: event.title,
+      p_description: event.description,
+      p_organizer: event.organizer,
+      p_category: event.category,
+      p_reservation_start: event.reservationStart,
+      p_reservation_end: event.reservationEnd,
+      p_reservation_platform: event.reservationPlatform,
+      p_reservation_link: event.reservationLink
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  update: async (id: number, event: {
+    title?: string;
+    description?: string;
+    organizer?: string;
+    category?: string;
+    reservationStart?: Date;
+    reservationEnd?: Date;
+    reservationPlatform?: string;
+    reservationLink?: string;
+  }) => {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    const { data, error } = await supabase.rpc('update_event', {
+      p_id: id,
+      p_title: event.title,
+      p_description: event.description,
+      p_organizer: event.organizer,
+      p_category: event.category,
+      p_reservation_start: event.reservationStart,
+      p_reservation_end: event.reservationEnd,
+      p_reservation_platform: event.reservationPlatform,
+      p_reservation_link: event.reservationLink
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  delete: async (id: number) => {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    const { data, error } = await supabase.rpc('delete_event', { p_id: id });
+    if (error) throw error;
+    return data;
+  },
+
+  get: async (id: number) => {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    const { data, error } = await supabase.rpc('get_event', { p_id: id });
+    if (error) throw error;
+    return transformers.fromSupabase.event(data);
+  },
+
+  list: async (params?: { category?: string; startDate?: Date; endDate?: Date }) => {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    const { data, error } = await supabase.rpc('list_events', {
+      p_category: params?.category,
+      p_start_date: params?.startDate,
+      p_end_date: params?.endDate
+    });
+    if (error) throw error;
+    return data.map(transformers.fromSupabase.event);
+  },
+
+  createNotification: async (notification: {
+    eventId: number;
+    type: string;
+    minutesBefore: number;
+  }) => {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    const { data, error } = await supabase.rpc('create_notification', {
+      p_event_id: notification.eventId,
+      p_type: notification.type,
+      p_minutes_before: notification.minutesBefore
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  deleteNotification: async (eventId: number) => {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    const { data, error } = await supabase.rpc('delete_notification', { p_event_id: eventId });
+    if (error) throw error;
+    return data;
+  },
+
+  createNote: async (note: {
+    eventId: number;
+    content: string;
+  }) => {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    const { data, error } = await supabase.rpc('create_note', {
+      p_event_id: note.eventId,
+      p_content: note.content
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  getNote: async (eventId: number) => {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    const { data, error } = await supabase.rpc('get_note', { p_event_id: eventId });
+    if (error) throw error;
+    return transformers.fromSupabase.note(data);
+  }
+};
+
+// 서버 데이터를 클라이언트 형식으로 변환
+const transformFromServer = (data: any) => {
+  if (!data) return null;
+  
+  return {
+    id: data.id,
+    userId: data.user_id,
+    eventId: data.event_id,
+    type: data.type,
+    minutesBefore: data.minutes_before,
+    isActive: data.is_active,
+    createdAt: new Date(data.created_at),
+    updatedAt: new Date(data.updated_at)
+  };
+};
+
+// 알림 서비스
+export const notificationService = {
+  async create(data: { eventId: number; type: 'push' | 'email' | 'both'; minutesBefore: number }) {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    
+    const { data: result, error } = await supabase.rpc('create_notification', {
+      p_event_id: data.eventId,
+      p_type: data.type,
+      p_minutes_before: data.minutesBefore
+    });
+
+    if (error) throw error;
+    return result;
+  },
+
+  async update(id: number, data: { type?: 'push' | 'email' | 'both'; minutesBefore?: number; isActive?: boolean }) {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    
+    const { error } = await supabase.rpc('update_notification', {
+      p_id: id,
+      p_type: data.type,
+      p_minutes_before: data.minutesBefore,
+      p_is_active: data.isActive
+    });
+
+    if (error) throw error;
+    return true;
+  },
+
+  async delete(id: number) {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    
+    const { error } = await supabase.rpc('delete_notification', {
+      p_id: id
+    });
+
+    if (error) throw error;
+    return true;
+  },
+
+  async get(id: number) {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    
+    const { data, error } = await supabase.rpc('get_notification', {
+      p_id: id
+    });
+
+    if (error) throw error;
+    return transformFromServer(data);
+  },
+
+  async list() {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    
+    const { data, error } = await supabase.rpc('list_notifications');
+
+    if (error) throw error;
+    return data.map(transformFromServer);
+  },
+
+  async listByEvent(eventId: number) {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    
+    const { data, error } = await supabase.rpc('list_notifications', {
+      p_event_id: eventId
+    });
+
+    if (error) throw error;
+    return data.map(transformFromServer);
+  }
+};
+
+// 노트 서비스
+export const noteService = {
+  async create(data: { eventId: number; content: string }) {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    
+    const { data: result, error } = await supabase.rpc('create_note', {
+      p_event_id: data.eventId,
+      p_content: data.content
+    });
+
+    if (error) throw error;
+    return result;
+  },
+
+  async update(id: number, data: { content: string }) {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    
+    const { error } = await supabase.rpc('update_note', {
+      p_id: id,
+      p_content: data.content
+    });
+
+    if (error) throw error;
+    return true;
+  },
+
+  async delete(id: number) {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    
+    const { error } = await supabase.rpc('delete_note', {
+      p_id: id
+    });
+
+    if (error) throw error;
+    return true;
+  },
+
+  async get(id: number) {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    
+    const { data, error } = await supabase.rpc('get_note', {
+      p_id: id
+    });
+
+    if (error) throw error;
+    return transformers.fromSupabase.note(data);
+  },
+
+  async list() {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    
+    const { data, error } = await supabase.rpc('list_notes');
+
+    if (error) throw error;
+    return data.map(transformers.fromSupabase.note);
+  },
+
+  async listByEvent(eventId: number) {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    
+    const { data, error } = await supabase.rpc('list_notes', {
+      p_event_id: eventId
+    });
+
+    if (error) throw error;
+    return data.map(transformers.fromSupabase.note);
+  }
+};
+
+// 방문 예약 서비스
+export const visitReservationService = {
+  async create(data: {
+    boothActivityId: number;
+    visitorName: string;
+    visitorPhone: string;
+    visitorEmail: string;
+    visitDatetime: Date;
+    reservationPlatform?: string;
+    reservationUrl?: string;
+    notes?: string;
+  }) {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    
+    const { data: result, error } = await supabase.rpc('create_resv_visit', {
+      p_booth_activity_id: data.boothActivityId,
+      p_visitor_name: data.visitorName,
+      p_visitor_phone: data.visitorPhone,
+      p_visitor_email: data.visitorEmail,
+      p_visit_datetime: data.visitDatetime,
+      p_reservation_platform: data.reservationPlatform,
+      p_reservation_url: data.reservationUrl,
+      p_notes: data.notes
+    });
+
+    if (error) throw error;
+    return result;
+  },
+
+  async update(id: number, data: {
+    visitorName?: string;
+    visitorPhone?: string;
+    visitorEmail?: string;
+    visitDatetime?: Date;
+    reservationPlatform?: string;
+    reservationUrl?: string;
+    notes?: string;
+    status?: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  }) {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    
+    const { error } = await supabase.rpc('update_resv_visit', {
+      p_id: id,
+      p_visitor_name: data.visitorName,
+      p_visitor_phone: data.visitorPhone,
+      p_visitor_email: data.visitorEmail,
+      p_visit_datetime: data.visitDatetime,
+      p_reservation_platform: data.reservationPlatform,
+      p_reservation_url: data.reservationUrl,
+      p_notes: data.notes,
+      p_status: data.status
+    });
+
+    if (error) throw error;
+    return true;
+  },
+
+  async delete(id: number) {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    
+    const { error } = await supabase.rpc('delete_resv_visit', {
+      p_id: id
+    });
+
+    if (error) throw error;
+    return true;
+  },
+
+  async get(id: number) {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    
+    const { data, error } = await supabase.rpc('get_resv_visits', {
+      p_id: id
+    });
+
+    if (error) throw error;
+    return transformFromServer(data);
+  },
+
+  async list(params?: {
+    boothActivityId?: number;
+    startDate?: Date;
+    endDate?: Date;
+    status?: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  }) {
+    if (!supabase) throw new Error('Supabase 클라이언트가 초기화되지 않았습니다.');
+    
+    const { data, error } = await supabase.rpc('list_resv_visits', {
+      p_booth_activity_id: params?.boothActivityId,
+      p_start_date: params?.startDate,
+      p_end_date: params?.endDate,
+      p_status: params?.status
+    });
+
+    if (error) throw error;
+    return data.map(transformFromServer);
+  }
+}; 

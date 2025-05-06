@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { signInWithKakao } from '../../services/supabase';
+  import { signInWithKakao } from '@services/supabase'
   import Button from '../ui/Button.svelte';
   import Card from '../ui/Card.svelte';
   

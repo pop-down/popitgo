@@ -1,35 +1,35 @@
 <script lang="ts">
   import { APP_NAME, APP_VERSION } from '@lib/constants/app';
   import { Calendar, User, Settings, Home } from 'lucide-svelte';
+  import { onMount } from 'svelte';
   import { writable } from 'svelte/store';
-  
+  export let navigateTo: (path: string) => void;
+  export let currentPath: string;
+
   const currentYear = new Date().getFullYear();
   const activeTab = writable('home');
-  
-  // URL 기반으로 현재 탭 결정
+
   const updateActiveTab = (path: string): void => {
     if (path === '/') {
       activeTab.set('home');
     } else if (path.startsWith('/events')) {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.has('tab') && urlParams.get('tab') === 'my-reservations') {
-        activeTab.set('bookings');
-      } else {
-        activeTab.set('events');
-      }
+      activeTab.set('events');
+    } else if (path.startsWith('/reservations')) {
+      activeTab.set('bookings');
     } else if (path.startsWith('/settings')) {
       activeTab.set('settings');
     }
   };
-  
-  // 첫 로드 시 URL 기반 탭 설정
-  updateActiveTab(window.location.pathname);
-  
-  // 탭 전환 함수
-  function navigateTo(path: string, tab: string): void {
-    activeTab.set(tab);
-    window.location.href = path;
-  }
+
+  $: updateActiveTab(currentPath);
+
+  // 첫 로드 및 popstate 시 URL 기반 탭 설정
+  onMount(() => {
+    updateActiveTab(window.location.pathname);
+    window.addEventListener('popstate', () => {
+      updateActiveTab(window.location.pathname);
+    });
+  });
 </script>
 
 <footer class="mt-auto bg-neutral-800 text-white py-4">
@@ -41,28 +41,28 @@
 <nav class="bottom-nav">
   <button 
     class:active={$activeTab === 'home'} 
-    on:click={() => navigateTo('/', 'home')}
+    on:click={() => navigateTo('/')}
   >
     <Home size={24} />
     <span>홈</span>
   </button>
   <button 
     class:active={$activeTab === 'events'} 
-    on:click={() => navigateTo('/events', 'events')}
+    on:click={() => navigateTo('/events')}
   >
     <Calendar size={24} />
     <span>이벤트</span>
   </button>
   <button 
     class:active={$activeTab === 'bookings'} 
-    on:click={() => navigateTo('/events?tab=my-reservations', 'bookings')}
+    on:click={() => navigateTo('/reservations')}
   >
     <User size={24} />
     <span>예약</span>
   </button>
   <button 
     class:active={$activeTab === 'settings'} 
-    on:click={() => navigateTo('/settings', 'settings')}
+    on:click={() => navigateTo('/settings')}
   >
     <Settings size={24} />
     <span>설정</span>

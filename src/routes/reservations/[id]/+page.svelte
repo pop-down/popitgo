@@ -18,7 +18,7 @@
       error = null;
 
       const { data, error: err } = await supabase
-        .rpc('get_visit_reservation', {
+        .rpc('get_resv_visits', {
           p_reservation_id: reservationId
         });
 
