@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import Button from '../components/ui/Button.svelte';
-  import { eventsStore, type Event } from '../stores/events';
-  import { formatDateTime, getTimeFromNow } from '../lib/utils/date';
+  import Button from '@components/ui/Button.svelte';
+  import { eventsStore, type Event } from '@stores/events';
+  import { formatDateTime, getTimeFromNow } from '@lib/utils/date';
   import { Calendar, Clock, AlertTriangle, X, ChevronRight } from 'lucide-svelte';
-  import EventCard from '../components/features/EventCard.svelte';
+  import EventCard from '@components/features/EventCard.svelte';
   
   // 다가오는 이벤트
   let upcomingEvents: Event[] = [];

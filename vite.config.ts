@@ -1,10 +1,12 @@
 import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { VitePWA } from 'vite-plugin-pwa'
+import path from 'path'
+
 
 export default defineConfig({
   plugins: [
-    svelte(),
+    svelte() as any,
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['robots.txt', 'vite.svg'],
@@ -27,5 +29,22 @@ export default defineConfig({
       }
     })
   ],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@stores': path.resolve(__dirname, './src/stores'),
+      '@components': path.resolve(__dirname, './src/components'),
+      '@lib': path.resolve(__dirname, './src/lib'),
+      '@services': path.resolve(__dirname, './src/services'),
+      '@routes': path.resolve(__dirname, './src/routes'),
+      '@assets': path.resolve(__dirname, './src/assets'),
+      '@docs': path.resolve(__dirname, '../docs')
+    }
+  },
+  build: {
+    rollupOptions: {
+      external: ['$app/stores']
+    }
+  },
   base: '/'
 })

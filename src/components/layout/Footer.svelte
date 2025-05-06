@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { APP_NAME, APP_VERSION } from '../../lib/constants/app';
+  import { APP_NAME, APP_VERSION } from '@lib/constants/app';
   import { Calendar, User, Settings, Home } from 'lucide-svelte';
   import { writable } from 'svelte/store';
   

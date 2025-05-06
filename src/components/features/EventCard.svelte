@@ -1,14 +1,17 @@
 <script lang="ts">
   import { fly } from 'svelte/transition';
   import { createEventDispatcher } from 'svelte';
-  import Button from '../ui/Button.svelte';
-  import Card from '../ui/Card.svelte';
-  import { formatDateTime, getTimeFromNow } from '../../lib/utils/date';
+  import Button from '@components/ui/Button.svelte';
+  import Card from '@components/ui/Card.svelte';
+  import { formatDateTime, getTimeFromNow } from '@lib/utils/date';
   import { Calendar, Clock, ExternalLink, ChevronDown, ChevronUp, Bell, BellOff, ArrowRight, Plus, ChevronRight, Globe } from 'lucide-svelte';
   import { onMount } from 'svelte';
   import { format } from 'date-fns';
   import { ko } from 'date-fns/locale';
-  import { authStore } from '../../stores/auth';
+  import { authStore } from '@stores/auth';
+  import type { Event } from '@stores/events';
+  import type { EventCategory } from '@lib/types';
+  import { EVENT_CATEGORIES } from '@lib/constants/app';
   
   export let id: string;
   export let title: string;

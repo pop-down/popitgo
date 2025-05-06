@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { authStore } from '../../stores/auth';
-  import Button from '../ui/Button.svelte';
+  import { authStore } from '@stores/auth';
+  import Button from '@components/ui/Button.svelte';
   import { User, Home, Download, LogOut, LogIn } from 'lucide-svelte';
   
   let isAppInstalled = false;
